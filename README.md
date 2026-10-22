@@ -4,7 +4,7 @@ Reproducible analysis of the locally provided ULB / Worldline credit-card-fraud 
 
 ## Problem and dataset
 
-The binary target is `Class` (1 fraud, 0 legitimate). The standard file contains `Time`, `V1`–`V28`, `Amount`, and `Class`. The commonly documented reference is [MLG-ULB Credit Card Fraud Detection on Kaggle](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud). No source documentation or license accompanied the local CSV, so its provenance and redistribution rights are unverified. Obtain the data independently and do not redistribute it unless its terms permit it. `Time` is elapsed seconds relative to the dataset, not a calendar date or known time of day. `V1`–`V28` are anonymized transformed features with limited direct business interpretability.
+The binary target is `Class` (1 fraud, 0 legitimate). The standard file contains `Time`, `V1`–`V28`, `Amount`, and `Class`. The commonly documented reference is [MLG-ULB Credit Card Fraud Detection on Kaggle](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud). The raw `creditcard.csv` is excluded from GitHub because its redistribution rights are unverified. Obtain the dataset independently; do not redistribute it unless its terms permit it. `Time` is elapsed seconds relative to the dataset, not a calendar date or known time of day. `V1`–`V28` are anonymized transformed features with limited direct business interpretability.
 
 ## Observed results
 
@@ -23,9 +23,11 @@ The binary target is `Class` (1 fraud, 0 legitimate). The standard file contains
 | Random Forest | 0.9466 | 0.7662 | 0.9512 | 0.6842 | 0.7959 |
 | Dummy (prior) | 0.5000 | 0.0010 | 0.0000 | 0.0000 | 0.0000 |
 
+The prior-only dummy model's average precision (0.0010) is close to the validation fraud prevalence (57/56,745, about 0.0010), providing a useful no-skill reference for the ranking models.
+
 ### Validation threshold trade-offs
 
-These counts and metrics are measured on the 56,745-row validation interval only. The selected threshold maximizes validation F2; its validation result is 43 true positives, 7 false positives, 14 false negatives, and 50 alerts. This is a validation-based selection, not a guarantee of the same alert volume or performance on later data.
+These counts and metrics are measured on the 56,745-row validation interval only. The selected threshold maximizes validation F2; at 0.90566246, validation F2 is 0.77338 (shown as 0.773 below), with 43 true positives, 7 false positives, 14 false negatives, and 50 alerts. This is a validation-based selection, not a guarantee of the same alert volume or performance on later data.
 
 | Threshold | Precision | Recall | F2 | TP | FP | FN | Alerts |
 |---:|---:|---:|---:|---:|---:|---:|---:|
@@ -43,7 +45,7 @@ These counts and metrics are measured on the 56,745-row validation interval only
 
 1. Use Python 3.10 or newer.
 2. Install dependencies: `python -m pip install -r requirements.txt`.
-3. Obtain the dataset independently from the source above and place it at `<project-root>/creditcard.csv`. The CSV is not committed, so cloning the repository alone is not sufficient to run the notebook.
+3. Obtain the dataset independently from the source above and place it at `<project-root>/creditcard.csv`. The CSV is not committed, so cloning the repository alone is not sufficient to run the notebook. `.gitignore` ignores matching data files that are untracked; it does not remove or untrack files already tracked by Git.
 4. If the file is elsewhere, edit `DATA_PATH` in the notebook's **Imports and configuration** cell to point to the local CSV, for example `Path(r"C:\path\to\creditcard.csv")`.
 5. Run from the project root: `jupyter nbconvert --to notebook --execute --inplace notebooks/credit_card_fraud_detection.ipynb`. For interactive use: `jupyter lab notebooks/credit_card_fraud_detection.ipynb`.
 
@@ -54,7 +56,7 @@ These counts and metrics are measured on the 56,745-row validation interval only
 - `reports/` — quality audit, model comparison, test metrics, permutation importance, and summary.
 - `plots/` — generated EDA and evaluation figures.
 - `models/` — fitted pipeline and JSON metadata including schema and decision threshold.
-- `data/raw/` — reserved for data only if safely copied; this project leaves the input CSV in place to avoid duplication.
+- `data/raw/` — empty by default; the notebook expects `<project-root>/creditcard.csv` unless `DATA_PATH` is changed.
 
 ## Cleaning and modeling decisions
 
