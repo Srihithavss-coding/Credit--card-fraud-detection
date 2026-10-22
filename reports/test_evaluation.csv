@@ -1,0 +1,2 @@
+threshold,precision,recall,f1,f2,specificity,true_negatives,false_positives,false_negatives,true_positives,alert_volume,roc_auc,average_precision,fraud_prevalence,test_fraud_count
+0.9056624624437164,0.8461538461538461,0.7432432432432432,0.7913669064748201,0.7617728531855956,0.9998235460191982,56662,10,19,55,65,0.9859750083934866,0.7764340777054535,0.0013040566735981391,74

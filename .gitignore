@@ -1,0 +1,26 @@
+# Python environments and generated caches
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Editor and operating-system files
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+
+# Dataset files must not be redistributed by accident
+data/raw/*
+!data/raw/.gitkeep
+creditcard.csv
+
+# Temporary outputs
+*.tmp
+*.log

@@ -1,0 +1,12 @@
+model,validation_roc_auc,validation_average_precision,precision_at_0_5,recall_at_0_5,f1_at_0_5,configuration
+HistGradientBoosting,0.9762451659065813,0.7743171685375773,0.23232323232323232,0.8070175438596491,0.3607843137254902,"HistGradientBoostingClassifier(l2_regularization=1.0, learning_rate=0.08,
+                               max_iter=80, max_leaf_nodes=15,
+                               min_samples_leaf=30, random_state=42)"
+Logistic Regression,0.9705664988041653,0.7736724881662101,0.025666834423754403,0.8947368421052632,0.049902152641878667,"Pipeline(steps=[('scaler', StandardScaler()),
+                ('model',
+                 LogisticRegression(class_weight='balanced', max_iter=1000,
+                                    random_state=42))])"
+Random Forest,0.9465845056474095,0.7662256739774842,0.9512195121951219,0.6842105263157895,0.7959183673469388,"RandomForestClassifier(class_weight='balanced_subsample', max_depth=10,
+                       min_samples_leaf=4, n_estimators=60, n_jobs=2,
+                       random_state=42)"
+Dummy (prior),0.5,0.0010044937879989425,0.0,0.0,0.0,DummyClassifier(strategy='prior')
