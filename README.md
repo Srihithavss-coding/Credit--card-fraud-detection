@@ -48,6 +48,9 @@ These counts and metrics are measured on the 56,745-row validation interval only
 3. Obtain the dataset independently from the source above and place it at `<project-root>/creditcard.csv`. The CSV is not committed, so cloning the repository alone is not sufficient to run the notebook. `.gitignore` ignores matching data files that are untracked; it does not remove or untrack files already tracked by Git.
 4. If the file is elsewhere, edit `DATA_PATH` in the notebook's **Imports and configuration** cell to point to the local CSV, for example `Path(r"C:\path\to\creditcard.csv")`.
 5. Run from the project root: `jupyter nbconvert --to notebook --execute --inplace notebooks/credit_card_fraud_detection.ipynb`. For interactive use: `jupyter lab notebooks/credit_card_fraud_detection.ipynb`.
+6. Run the dataset-independent automated tests from the project root: `python -m pytest`.
+
+The checked-in model artifact records scikit-learn **1.7.2** in `models/model_metadata.json`; `requirements.txt` pins that version because scikit-learn does not guarantee compatibility when loading persisted estimators created by a different version. Recreate the model in a matching environment if you intentionally change scikit-learn.
 
 ## Project structure
 
@@ -62,6 +65,6 @@ These counts and metrics are measured on the 56,745-row validation interval only
 
 Exact duplicates are removed while keeping the first occurrence before splitting; this assumption reduces the cleaned fraud count by 19, and reported conclusions are conditional on that policy. No target changes, imputation, or automatic outlier deletion are made. A chronological 60/20/20 split is used without stratification. Logistic Regression scales within its training pipeline; tree models use unscaled inputs. Class weights/sample weights address imbalance in selected models. Model choice and the F2 decision threshold use validation only; the final test interval is reserved for reporting.
 
-## Dependencies and future work
+## Dependencies and suggested future work
 
-See `requirements.txt`. Potential follow-up work includes rolling-origin validation, uncertainty intervals, verified current data with documented provenance, probability-calibration checks on separate data, and threshold optimization using actual review capacity and error costs. None of these follow-up analyses is implemented in the current results. This benchmark alone is not sufficient for production decisions.
+See `requirements.txt`. The current implementation and reported results use one chronological split, validation-based F2 threshold selection, and a held-out test interval as described above. Suggested future work—not implemented in the current results—includes rolling-origin validation, uncertainty intervals, verified current data with documented provenance, probability-calibration checks on separate data, and threshold optimization using actual review capacity and error costs. This benchmark alone is not sufficient for production decisions.

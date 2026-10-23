@@ -19,6 +19,8 @@ def validate_schema(data: pd.DataFrame) -> None:
         )
     if not all(pd.api.types.is_numeric_dtype(data[column]) for column in data):
         raise TypeError("Every column in the expected ULB schema must be numeric.")
+    if data["Class"].isna().any():
+        raise ValueError("Target column 'Class' must not contain missing labels.")
     labels = set(data["Class"].dropna().unique())
     if labels != {0, 1}:
         raise ValueError(f"Expected target labels {{0, 1}}, found {labels}.")

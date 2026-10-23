@@ -13,7 +13,7 @@
 
 This is a historical benchmark with anonymized PCA features, sparse fraud cases, no documented calendar reference for Time, and no source/license documentation included alongside the local CSV. Chronological holdout results may be unstable and do not establish present-day banking effectiveness, calibrated operational risk, or business value. Threshold selection optimizes validation F2 in the absence of costs or investigation capacity.
 
-## Interview-style critical review
+## Suggested future work (not implemented)
 
 1. **Temporal representativeness:** one chronological split is vulnerable to drift and small numbers of later fraud cases. Improve with repeated rolling-origin evaluation and uncertainty intervals.
 2. **Decision economics:** F2 is only a proxy without costs or analyst capacity. Obtain validated cost and capacity assumptions, then compare expected utility and precision-at-capacity.

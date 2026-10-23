@@ -43,12 +43,18 @@ def select_f2_threshold(labels: pd.Series, probabilities: np.ndarray) -> tuple[f
     """Choose the F2-maximizing threshold using validation labels only."""
     labels_array = np.asarray(labels, dtype=np.int8)
     probabilities = np.asarray(probabilities, dtype=float)
+    if not labels_array.any():
+        raise ValueError("Cannot select an F2 threshold without positive labels.")
     precision, recall, thresholds = precision_recall_curve(
         labels_array, probabilities
     )
     beta_squared = 4.0
-    f2 = (1 + beta_squared) * precision[:-1] * recall[:-1] / (
-        beta_squared * precision[:-1] + recall[:-1]
+    f2_denominator = beta_squared * precision[:-1] + recall[:-1]
+    f2 = np.divide(
+        (1 + beta_squared) * precision[:-1] * recall[:-1],
+        f2_denominator,
+        out=np.zeros_like(f2_denominator),
+        where=f2_denominator > 0,
     )
     predicted_positive = len(probabilities) - np.searchsorted(
         np.sort(probabilities), thresholds, side="left"
