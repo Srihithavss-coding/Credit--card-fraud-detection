@@ -23,11 +23,11 @@ The binary target is `Class` (1 fraud, 0 legitimate). The standard file contains
 | Random Forest | 0.9466 | 0.7662 | 0.9512 | 0.6842 | 0.7959 |
 | Dummy (prior) | 0.5000 | 0.0010 | 0.0000 | 0.0000 | 0.0000 |
 
-The prior-only dummy model's average precision (0.0010) is close to the validation fraud prevalence (57/56,745, about 0.0010), providing a useful no-skill reference for the ranking models.
+Only 57 of 56,745 validation rows are fraud, so average precision is more informative than accuracy for comparing transaction rankings: it summarizes precision and recall across thresholds. HistGradientBoosting's validation AP (0.774317) is only about 0.000645 above Logistic Regression (0.773672); this small difference on one interval does not establish consistent superiority. The prior-only dummy model's AP (0.0010) is close to the validation fraud prevalence (57/56,745), providing a useful no-skill reference.
 
 ### Validation threshold trade-offs
 
-These counts and metrics are measured on the 56,745-row validation interval only. The selected threshold maximizes validation F2; at 0.90566246, validation F2 is 0.77338 (shown as 0.773 below), with 43 true positives, 7 false positives, 14 false negatives, and 50 alerts. This is a validation-based selection, not a guarantee of the same alert volume or performance on later data.
+These counts and metrics are measured on the 56,745-row validation interval only. The selected threshold maximizes validation F2; at 0.90566246, validation F2 is 0.77338 (shown as 0.773 below), with 43 true positives, 7 false positives, 14 false negatives, and 50 alerts. F2 weights recall more heavily than precision, reflecting an emphasis on missed fraud when no operational review capacity or error costs are available. It is a validation-based proxy, not a business-optimal threshold or a guarantee of later alert volume or performance.
 
 | Threshold | Precision | Recall | F2 | TP | FP | FN | Alerts |
 |---:|---:|---:|---:|---:|---:|---:|---:|
@@ -51,6 +51,8 @@ These counts and metrics are measured on the 56,745-row validation interval only
 6. Run the dataset-independent automated tests from the project root: `python -m pytest`.
 
 The checked-in model artifact records scikit-learn **1.7.2** in `models/model_metadata.json`; `requirements.txt` pins that version because scikit-learn does not guarantee compatibility when loading persisted estimators created by a different version. Recreate the model in a matching environment if you intentionally change scikit-learn.
+
+The notebook locates the project root from `README.md` and `src/`, whether launched from the repository root or its `notebooks/` directory. Its default dataset path remains `<project-root>/creditcard.csv`; it does not download the data.
 
 ## Project structure
 
