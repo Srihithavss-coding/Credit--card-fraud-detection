@@ -1,20 +1,24 @@
 # Credit Card Fraud Detection
 
-Reproducible analysis of the locally provided ULB / Worldline credit-card-fraud benchmark. The notebook is the primary deliverable. The dataset CSV is not committed; obtain it independently before running the project.
+An end-to-end analysis of the ULB / Worldline credit-card-fraud benchmark. The notebook audits the data, explores class and feature patterns, compares classifiers, selects a decision threshold using validation data, and reports performance on a later chronological test interval.
 
-## Problem and dataset
+## Dataset and method
 
-The binary target is `Class` (1 fraud, 0 legitimate). The standard file contains `Time`, `V1`–`V28`, `Amount`, and `Class`. The commonly documented reference is [MLG-ULB Credit Card Fraud Detection on Kaggle](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud). The raw `creditcard.csv` is excluded from GitHub because its redistribution rights are unverified. Obtain the dataset independently; do not redistribute it unless its terms permit it. `Time` is elapsed seconds relative to the dataset, not a calendar date or known time of day. `V1`–`V28` are anonymized transformed features with limited direct business interpretability.
+The standard dataset has 284,807 rows and 31 columns: elapsed `Time`, anonymized features `V1`–`V28`, `Amount`, and binary target `Class` (1 = fraud). The commonly documented reference is [MLG-ULB Credit Card Fraud Detection on Kaggle](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud). No source or license documentation accompanied the local CSV, so provenance and redistribution rights are unverified. The data is not included in this repository.
 
-## Observed results
+The analysis removes 1,081 exact duplicate rows, keeping the first occurrence (19 fraud and 1,062 legitimate). This is an explicit preprocessing assumption: results depend on treating identical rows as repeats. No missing values were imputed and no non-duplicate outliers were removed. A deterministic `log1p(Amount)` feature is added.
 
-- Raw data: 284,807 rows, 31 columns; fraud prevalence 492/284,807 (0.1727%); cleaned data has 473 fraud records (0.1667%).
-- Cleaning: 1,081 exact duplicate rows were removed from the analysis copy (19 fraud, 1,062 legitimate); no missing or non-finite values, and no non-duplicate outliers were removed. This is an analysis assumption: conclusions depend on the deduplication policy. The original CSV remains unchanged.
-- EDA: fraud amount median 9.82, legitimate median 22.00. The distributions overlap, so the difference in medians does not justify a simple amount cutoff. V17 (-8.09), V14 (-7.52), and V12 (-6.35) had the largest absolute standardized mean differences among PCA features; these descriptive effects do not confer business meaning on anonymized variables. The strongest observed pairwise PCA-feature correlation is small (V8–V21: 0.019); low pairwise correlation does not rule out nonlinear or interaction-based predictive value.
-- Chronological splits (inclusive observed `Time` ranges in elapsed seconds): train 170,235 rows/342 fraud, 0–120,392; validation 56,745/57, 120,393–145,233; test 56,746/74, 145,234–172,792. These are dataset-relative elapsed seconds, not calendar dates or times of day.
-- **HistGradientBoosting** had the highest observed validation average precision (0.77432), narrowly ahead of Logistic Regression (0.7737). This small difference on one validation interval does not establish consistent superiority.
+Rows are split chronologically by elapsed `Time`, without stratification:
 
-### Validation model comparison
+| Partition | Rows | Fraud cases | Inclusive `Time` range (seconds) |
+|---|---:|---:|---:|
+| Train | 170,235 | 342 | 0–120,392 |
+| Validation | 56,745 | 57 | 120,393–145,233 |
+| Test | 56,746 | 74 | 145,234–172,792 |
+
+Model configurations are fixed before fitting. Models are trained on the training interval and compared on validation average precision (AP), with ROC-AUC and threshold-0.5 scores also reported. AP is useful under the severe class imbalance (57 fraud cases in validation); the prior-only model's AP of 0.0010 is close to validation prevalence.
+
+## Validation results
 
 | Model | ROC-AUC | Average precision | Precision @ 0.5 | Recall @ 0.5 | F1 @ 0.5 |
 |---|---:|---:|---:|---:|---:|
@@ -23,50 +27,43 @@ The binary target is `Class` (1 fraud, 0 legitimate). The standard file contains
 | Random Forest | 0.9466 | 0.7662 | 0.9512 | 0.6842 | 0.7959 |
 | Dummy (prior) | 0.5000 | 0.0010 | 0.0000 | 0.0000 | 0.0000 |
 
-Only 57 of 56,745 validation rows are fraud, so average precision is more informative than accuracy for comparing transaction rankings: it summarizes precision and recall across thresholds. HistGradientBoosting's validation AP (0.774317) is only about 0.000645 above Logistic Regression (0.773672); this small difference on one interval does not establish consistent superiority. The prior-only dummy model's AP (0.0010) is close to the validation fraud prevalence (57/56,745), providing a useful no-skill reference.
+HistGradientBoosting was selected by validation AP. Its AP (0.77432) is only 0.000645 above Logistic Regression (0.77367); this small difference on one validation interval does not establish consistent superiority.
 
-### Validation threshold trade-offs
+The threshold was selected by maximizing validation F2, which weights recall more heavily than precision. At the selected threshold, compared with the conventional 0.5 cutoff:
 
-These counts and metrics are measured on the 56,745-row validation interval only. The selected threshold maximizes validation F2; at 0.90566246, validation F2 is 0.77338 (shown as 0.773 below), with 43 true positives, 7 false positives, 14 false negatives, and 50 alerts. F2 weights recall more heavily than precision, reflecting an emphasis on missed fraud when no operational review capacity or error costs are available. It is a validation-based proxy, not a business-optimal threshold or a guarantee of later alert volume or performance.
-
-| Threshold | Precision | Recall | F2 | TP | FP | FN | Alerts |
+| Validation threshold | Precision | Recall | F2 | TP | FP | FN | Alerts |
 |---:|---:|---:|---:|---:|---:|---:|---:|
-| 0.01 | 0.003 | 0.982 | 0.015 | 56 | 18344 | 1 | 18400 |
-| 0.05 | 0.018 | 0.877 | 0.085 | 50 | 2660 | 7 | 2710 |
-| 0.1 | 0.039 | 0.860 | 0.163 | 49 | 1222 | 8 | 1271 |
 | 0.5 | 0.232 | 0.807 | 0.540 | 46 | 152 | 11 | 198 |
-| 0.905662 | 0.860 | 0.754 | 0.773 | 43 | 7 | 14 | 50 |
+| 0.90566246 (selected) | 0.860 | 0.754 | 0.773 | 43 | 7 | 14 | 50 |
 
-- Final test on the untouched 56,746-row interval (74 fraud): ROC-AUC 0.9860; AP 0.7764; precision 0.8462; recall 0.7432; F1 0.7914; threshold 0.90566246; TN=56,662, FP=10, FN=19, TP=55 (65 alerts). The threshold was selected using validation F2, not test labels. Alert counts differ across the validation and test intervals; this threshold is not optimized for real-world review capacity or financial costs.
+This reduces validation alerts while increasing missed fraud relative to 0.5. F2 is a proxy, not a business-optimal operating point: review capacity and error costs were not provided.
 
-**Limitations:** The final test interval contains only 74 fraud cases, and results come from one chronological split. Statistical uncertainty and temporal stability have not been established. F2 does not incorporate actual operational costs or review capacity. Dataset provenance and redistribution rights are unverified, and benchmark results do not establish production banking effectiveness. See [the final summary](reports/final_summary.md) for a critical review and possible next experiments; rolling-origin evaluation, uncertainty intervals, calibration, and cost-based threshold optimization have not been performed.
+## Held-out test results
 
-## Setup and execution
+The final chronological test interval was not used for model or threshold selection. At the validation-selected threshold:
 
-1. Use Python 3.10 or newer.
-2. Install dependencies: `python -m pip install -r requirements.txt`.
-3. Obtain the dataset independently from the source above and place it at `<project-root>/creditcard.csv`. The CSV is not committed, so cloning the repository alone is not sufficient to run the notebook. `.gitignore` ignores matching data files that are untracked; it does not remove or untrack files already tracked by Git.
-4. If the file is elsewhere, edit `DATA_PATH` in the notebook's **Imports and configuration** cell to point to the local CSV, for example `Path(r"C:\path\to\creditcard.csv")`.
-5. Run from the project root: `jupyter nbconvert --to notebook --execute --inplace notebooks/credit_card_fraud_detection.ipynb`. For interactive use: `jupyter lab notebooks/credit_card_fraud_detection.ipynb`.
-6. Run the dataset-independent automated tests from the project root: `python -m pytest`.
+| ROC-AUC | Average precision | Precision | Recall | F1 | TN | FP | FN | TP | Alerts |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0.9860 | 0.7764 | 0.8462 | 0.7432 | 0.7914 | 56,662 | 10 | 19 | 55 | 65 |
 
-The checked-in model artifact records scikit-learn **1.7.2** in `models/model_metadata.json`; `requirements.txt` pins that version because scikit-learn does not guarantee compatibility when loading persisted estimators created by a different version. Recreate the model in a matching environment if you intentionally change scikit-learn.
+There are only 74 fraud cases in this test interval, and the evaluation uses one chronological split. Metric uncertainty and temporal stability have not been established. These benchmark results do not establish production banking effectiveness. `Time` is not a calendar timestamp, and the anonymized PCA features have limited business interpretability. See [the final summary](reports/final_summary.md) for additional limitations and suggested future work.
 
-The notebook locates the project root from `README.md` and `src/`, whether launched from the repository root or its `notebooks/` directory. Its default dataset path remains `<project-root>/creditcard.csv`; it does not download the data.
+## Setup
 
-## Project structure
+1. Use Python 3.10 or newer. Install dependencies from the repository root:
+   ```powershell
+   python -m pip install -r requirements.txt
+   ```
+2. Obtain the dataset independently and place it at `<project-root>/creditcard.csv`. The notebook does not download it.
+3. From the repository root, run the notebook with `jupyter lab notebooks/credit_card_fraud_detection.ipynb` or execute it with `jupyter nbconvert --to notebook --execute --inplace notebooks/credit_card_fraud_detection.ipynb`. It can also be launched from `notebooks/`; project-root discovery uses `README.md` and `src/`.
+4. Run the dataset-independent tests from the repository root: `python -m pytest`.
 
-- `notebooks/credit_card_fraud_detection.ipynb` — end-to-end executed analysis.
-- `src/data_validation.py`, `src/data_cleaning.py`, `src/eda.py`, `src/train.py`, `src/evaluate.py` — reusable workflow modules.
-- `reports/` — quality audit, model comparison, test metrics, permutation importance, and summary.
-- `plots/` — generated EDA and evaluation figures.
-- `models/` — fitted pipeline and JSON metadata including schema and decision threshold.
-- `data/raw/` — empty by default; the notebook expects `<project-root>/creditcard.csv` unless `DATA_PATH` is changed.
+The saved model metadata records scikit-learn 1.7.2, which is pinned in `requirements.txt` for compatibility with the serialized model.
 
-## Cleaning and modeling decisions
+## Repository contents
 
-Exact duplicates are removed while keeping the first occurrence before splitting; this assumption reduces the cleaned fraud count by 19, and reported conclusions are conditional on that policy. No target changes, imputation, or automatic outlier deletion are made. A chronological 60/20/20 split is used without stratification. Logistic Regression scales within its training pipeline; tree models use unscaled inputs. Class weights/sample weights address imbalance in selected models. Model choice and the F2 decision threshold use validation only; the final test interval is reserved for reporting.
-
-## Dependencies and suggested future work
-
-See `requirements.txt`. The current implementation and reported results use one chronological split, validation-based F2 threshold selection, and a held-out test interval as described above. Suggested future work—not implemented in the current results—includes rolling-origin validation, uncertainty intervals, verified current data with documented provenance, probability-calibration checks on separate data, and threshold optimization using actual review capacity and error costs. This benchmark alone is not sufficient for production decisions.
+- `notebooks/credit_card_fraud_detection.ipynb` — end-to-end analysis and post-output interpretations.
+- `src/` — schema validation, cleaning, exploratory summaries, model training, and evaluation.
+- `tests/` — synthetic-data tests that do not require the benchmark CSV.
+- `reports/`, `plots/`, `models/` — saved analysis outputs, fitted pipeline, and model metadata.
+- `data/raw/` — empty placeholder; the notebook's default CSV location is the repository root.
